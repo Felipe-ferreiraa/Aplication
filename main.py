@@ -82,4 +82,73 @@ def delete_usuario(user_id: str):
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+    
 
+#endereco
+@app.post("/endereco/")
+def create_endereco(endereco: Endereco):
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO endereco (id_endereco, cidade, cep, estado, logradouro, numero, pais, complemento)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+            """,
+            (endereco.id, endereco.cidade, endereco.cep, endereco.estado, endereco.logradouro, endereco.numero, endereco.pais, endereco.complemento)
+        )
+        conn.commit()
+        cur.close()
+        return {"message": "Endereço inserido com sucesso."}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao inserir endereço: {str(e)}")
+
+@app.get("/endereco/")
+def read_endereco():
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM endereco")
+        enderecos = cur.fetchall()
+        cur.close()
+        return [{"id": endereco[0], "cidade": endereco[1], "cep": endereco[2], "estado": endereco[3], "logradouro": endereco[4],
+                 "numero": endereco[5], "pais": endereco[6], "complemento": endereco[7]} for endereco in enderecos]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class Enderecos(BaseModel):
+    cidade: str
+    cep: int
+    estado: str
+    logradouro: str
+    numero: int
+    pais: str
+    complemento: str
+
+@app.put("/enderecos/{id}")
+def update_enderecos(id: int, enderecos: Enderecos):
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            UPDATE endereco
+            SET cidade = %s,
+                cep = %s,
+                estado = %s,
+                logradouro = %s,
+                numero = %s,
+                pais = %s,
+                complemento = %s
+            WHERE Id_endereco = %s;
+            """,
+            (enderecos.cidade, enderecos.cep, enderecos.estado, enderecos.logradouro, enderecos.numero, enderecos.pais, enderecos.complemento, id)
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Endereço não encontrado")
+        
+        conn.commit()
+        cur.close()
+        return {"message": "Endereço atualizado com sucesso."}
+
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar endereço: {str(e)}")
