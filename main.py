@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import psycopg2
 
+#conexao
 conn = psycopg2.connect(
     host="bilheteria.cerczveferzk.us-east-1.rds.amazonaws.com",
     database="bilhetes",
@@ -10,8 +11,10 @@ conn = psycopg2.connect(
     port=5432
 )
 
+#framework
 app = FastAPI()
 
+#dados
 class Usuario(BaseModel):
     login: str
     senha: int
@@ -53,7 +56,7 @@ class Cliente(BaseModel):
     usuario_login: str
     id_endereco: int
 
-#usuario
+#tabela usuario
 @app.post("/usuario/")
 def create_usuario(usuario: Usuario):
     try:
@@ -102,7 +105,7 @@ def delete_usuario(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
     
 
-#endereco
+# tabela endereco
 @app.post("/endereco/")
 def create_endereco(endereco: Endereco):
     try:
@@ -186,6 +189,7 @@ def delete_endereco(id: str):
         raise HTTPException(status_code=500, detail=f"Erro ao deletar endereço: {str(e)}")
 
 
+#tabela cliente
 @app.post("/cliente/")
 def criar_cliente(cliente: Cliente):
     try:
