@@ -27,6 +27,15 @@ class Endereco(BaseModel):
     pais: str
     complemento: str
 
+class Enderecos(BaseModel):
+    cidade: str
+    cep: int
+    estado: str
+    logradouro: str
+    numero: int
+    pais: str
+    complemento: str
+
 class Cliente(BaseModel):
     id_cliente: int
     nome_completo: str
@@ -36,6 +45,7 @@ class Cliente(BaseModel):
     usuario_login: str
     id_endereco: int
 
+#usuario
 @app.post("/usuario/")
 def create_usuario(usuario: Usuario):
     try:
@@ -115,14 +125,6 @@ def read_endereco():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-class Enderecos(BaseModel):
-    cidade: str
-    cep: int
-    estado: str
-    logradouro: str
-    numero: int
-    pais: str
-    complemento: str
 
 @app.put("/enderecos/{id}")
 def update_enderecos(id: int, enderecos: Enderecos):
@@ -152,3 +154,50 @@ def update_enderecos(id: int, enderecos: Enderecos):
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar endereço: {str(e)}")
+
+@app.delete("/endereco/{id}")
+def delete_endereco(id: str):
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            DELETE FROM endereco
+            WHERE Id_endereco = %s;
+            """,
+            (id)
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Endereço não encontrado")
+        
+        conn.commit()
+        cur.close()
+        return {"message": "Excluido."}
+
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar endereço: {str(e)}")
+
+
+@app.post("/cliente/")
+def criar_cliente(cliente: Cliente):
+    try:
+        cur = conn.cursor()
+        cur.execute("INSERT INTO cliente (id_cliente, nome_completo, documento, telefone, email_cliente, usuario_login, Id_endereco) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
+                    (cliente.id_cliente, cliente.nome_completo, cliente.documento, cliente.telefone, cliente.email_cliente, cliente.usuario_login, cliente.id_endereco))
+        conn.commit()
+        cur.close()
+        return {"message": "cliente inserido com sucesso."}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/cliente/")
+def listar_clientes():
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM cliente")
+        clientes = cur.fetchall()
+        cur.close()
+        return [{"id": cliente[0], "nome": cliente[1], "documento": cliente[2], "telefone": cliente[3], "email": cliente[4], "usuario": cliente[5], "id_endereco": cliente[6] } for cliente in clientes]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
