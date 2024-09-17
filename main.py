@@ -259,3 +259,49 @@ def delete_cliente(id: str):
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"Erro ao deletar Cliente: {str(e)}")
+    
+#por ultimo transacao
+class Loca(BaseModel):
+    id: int
+    nome: str
+    quantidade: int
+    id_endereco: int
+
+@app.post("/loca/")
+def create_loca(loca: Loca):
+    try:
+        # Inicia uma transação
+        cur = conn.cursor()
+        
+        # Insere um registro na tabela `loca`
+        cur.execute(
+            """
+            INSERT INTO loca (id_local, nome, quantidade, id_endereco)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (loca.id, loca.nome, loca.quantidade, loca.id_endereco)
+        )
+        
+        # Confirma a transação
+        conn.commit()
+        
+        # Fecha o cursor
+        cur.close()
+        
+        return {"message": "Registro inserido com sucesso na tabela 'loca'."}
+
+    except Exception as e:
+        # Reverte a transação em caso de erro
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao inserir registro na tabela 'loca': {str(e)}")
+
+@app.get("/loca/")
+def listar_local():
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM loca")
+        locals = cur.fetchall()
+        cur.close()
+        return [{"id": loca[0], "nome": loca[1], "quantidade": loca[2], "id_endereco": loca[3]} for loca in locals]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
