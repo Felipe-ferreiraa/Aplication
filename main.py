@@ -36,6 +36,14 @@ class Enderecos(BaseModel):
     pais: str
     complemento: str
 
+class Clientes(BaseModel):
+    nome_completo: str
+    documento: str
+    telefone: int
+    email_cliente: str
+    usuario_login: str
+    id_endereco: int
+
 class Cliente(BaseModel):
     id_cliente: int
     nome_completo: str
@@ -201,3 +209,49 @@ def listar_clientes():
         return [{"id": cliente[0], "nome": cliente[1], "documento": cliente[2], "telefone": cliente[3], "email": cliente[4], "usuario": cliente[5], "id_endereco": cliente[6] } for cliente in clientes]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/cliente/{id}")
+def update_cliente(id: str, cliente: Clientes):
+       try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            UPDATE cliente
+            SET nome_completo = %s,
+                documento = %s,
+                telefone = %s,
+                email_cliente = %s,
+                usuario_login = %s,
+                id_endereco = %s
+            WHERE id_cliente = %s;
+            """,
+            (cliente.nome_completo, cliente.documento, cliente.telefone, cliente.email_cliente, cliente.usuario_login, cliente.id_endereco, id)
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Cliente não encontrado")
+        
+        conn.commit()
+        cur.close()
+        return {"message": "Cliennte atualizado com sucesso."}
+
+       except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar cliente: {str(e)}")
+
+@app.delete("/cliente/{id}")
+def delete_cliente(id: str):
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            DELETE FROM cliente
+            WHERE id_cliente = %s;
+            """,
+            (id)
+        )        
+        conn.commit()
+        cur.close()
+        return {"message": "Excluido."}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar Cliente: {str(e)}")
